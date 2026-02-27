@@ -61,22 +61,6 @@ export class Player extends Character {
     this.reticle.y = Math.sin(angle) * constrainedDist;
   }
 
-  private isCollidingWithEnemies(enemies: Enemy[]): boolean {
-    const playerBounds = this.getHitbox();
-    for (const enemy of enemies) {
-      const enemyBounds = enemy.getHitbox();
-      if (
-        playerBounds.x < enemyBounds.x + enemyBounds.width &&
-        playerBounds.x + playerBounds.width > enemyBounds.x &&
-        playerBounds.y < enemyBounds.y + enemyBounds.height &&
-        playerBounds.y + playerBounds.height > enemyBounds.y
-      ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public update(ticker: Ticker, worldWidth: number, worldHeight: number, obstacles: Obstacle[], enemies: Enemy[]) {
     const dt = ticker.deltaTime;
     const oldX = this.x;
@@ -86,14 +70,14 @@ export class Player extends Character {
     if (this.keys["ArrowLeft"] || this.keys["KeyA"]) this.x -= this.speed * dt;
     if (this.keys["ArrowRight"] || this.keys["KeyD"]) this.x += this.speed * dt;
 
-    if (this.isCollidingWithObstacles(obstacles) || this.isCollidingWithEnemies(enemies)) {
+    if (this.isCollidingWithObstacles(obstacles) || this.isCollidingWithCharacters(enemies)) {
       this.x = oldX;
     }
 
     if (this.keys["ArrowUp"] || this.keys["KeyW"]) this.y -= this.speed * dt;
     if (this.keys["ArrowDown"] || this.keys["KeyS"]) this.y += this.speed * dt;
 
-    if (this.isCollidingWithObstacles(obstacles) || this.isCollidingWithEnemies(enemies)) {
+    if (this.isCollidingWithObstacles(obstacles) || this.isCollidingWithCharacters(enemies)) {
       this.y = oldY;
     }
 

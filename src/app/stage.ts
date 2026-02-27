@@ -1,6 +1,7 @@
-import { Assets, Container, Ticker, FederatedPointerEvent, Rectangle, TilingSprite } from "pixi.js";
+import { Assets, Container, Ticker, FederatedPointerEvent, Rectangle, TilingSprite, Graphics } from "pixi.js";
 import { Player } from "./player";
-import { HUD, Minimap } from "./hud";
+import { Minimap } from "./hud";
+import { Kaiju } from "./kaiju";
 import { Enemy } from "./enemy";
 import { Homebase, Obstacle } from "./buildings";
 
@@ -12,16 +13,21 @@ interface ObstacleData {
 }
 
 export class GameStage extends Container {
-  private player!: Player; //TODO: understand exclamation point
+  // The '!' is a definite assignment assertion. It tells TypeScript that 'player'
+  // will be assigned a value later (in setup()), even though it's not in the constructor.
+  private player!: Player;
   private enemies: Enemy[] = [];
   private readonly enemiesNumber = 0;
-  private hud: HUD;
+  // private hud: HUD;
   private minimap: Minimap;
   private readonly screenWidth: number;
   private readonly screenHeight: number;
   private readonly worldWidth = 2800;
   private readonly worldHeight = 2000;
   private world: Container;
+  private kaiju: Kaiju | null = null;
+  private timeSinceStart = 0;
+  private kaijuSpawned = false;
   private homebase!: Homebase;
 
   constructor(screenWidth: number, screenHeight: number) {
@@ -33,8 +39,8 @@ export class GameStage extends Container {
 
     this.addChild(this.world);
 
-    this.hud = new HUD();
-    this.addChild(this.hud);
+    // this.hud = new HUD();
+    // this.addChild(this.hud);
 
     this.minimap = new Minimap(this.worldWidth, this.worldHeight, this.screenWidth, this.screenHeight);
     this.addChild(this.minimap);
@@ -62,6 +68,8 @@ export class GameStage extends Container {
       height: this.worldHeight,
     });
     this.world.addChild(background);
+
+    this.createWaterArea();
 
     // Load the bunny player
     const texture = await Assets.load("https://pixijs.com/assets/bunny.png");
@@ -104,6 +112,63 @@ export class GameStage extends Container {
       this.enemies.push(enemy);
       this.world.addChild(enemy);
     }
+  }
+
+  private async createKaiju(): Promise<void> {
+    if (!this.player) return; // Don't spawn if player is dead
+
+    const texture = await Assets.load("https://pixijs.com/assets/bunny.png");
+    this.kaiju = new Kaiju(texture, this.player, this.homebase);
+
+    // Position on the right side of the stage
+    this.kaiju.x = this.worldWidth - 100;
+    this.kaiju.y = this.worldHeight / 2;
+
+    this.enemies.push(this.kaiju);
+    this.world.addChild(this.kaiju);
+  }
+
+  private createWaterArea(): void {
+    const water = new Graphics();
+    const waterStartX = this.worldWidth * 0.9;
+    const amplitude1 = 40;
+    const frequency1 = 150;
+    const amplitude2 = 20;
+    const frequency2 = 70;
+    const segmentLength = 20;
+
+    water.moveTo(waterStartX, -10); // Start slightly off-screen
+
+    // Generate the wavy boundary using a combination of sine waves for a more natural look
+    for (let y = 0; y <= this.worldHeight + 10; y += segmentLength) {
+      const randomFactor = (Math.random() - 0.5) * 25;
+      const sin1 = Math.sin(y / frequency1) * amplitude1;
+      const sin2 = Math.sin(y / frequency2) * amplitude2;
+      const x = waterStartX + sin1 + sin2 + randomFactor;
+      water.lineTo(x, y);
+    }
+
+    // Close the shape to the right
+    water.lineTo(this.worldWidth + 10, this.worldHeight + 10);
+    water.lineTo(this.worldWidth + 10, -10);
+    water.closePath();
+
+    // Fill with a water-like color
+    water.fill({ color: 0x33a1de, alpha: 0.85 });
+
+    this.world.addChildAt(water, 1); // Add it after the background
+
+    // Add water representation to minimap
+    const waterMinimap = new Graphics()
+      .rect(
+        waterStartX * this.minimap.minimapScale,
+        0,
+        (this.worldWidth - waterStartX) * this.minimap.minimapScale,
+        this.worldHeight * this.minimap.minimapScale
+      )
+      .fill({ color: 0x33a1de, alpha: 0.5 });
+    this.minimap.addChildAt(waterMinimap, 1); // Add behind player/camera but above background
+
   }
 
   // OBSTACLES
@@ -177,6 +242,13 @@ export class GameStage extends Container {
   }
 
   public update(ticker: Ticker): void {
+    this.timeSinceStart += ticker.deltaMS;
+
+    if (!this.kaijuSpawned && this.timeSinceStart > 10) {
+      this.createKaiju();
+      this.kaijuSpawned = true;
+    }
+
     this.player?.update(ticker, this.worldWidth, this.worldHeight, this.obstacles, this.enemies); // The '?' handles if player is null
     this.enemies.forEach((enemy) => {
       enemy.update(ticker, this.worldWidth, this.worldHeight, this.obstacles);
@@ -195,6 +267,6 @@ export class GameStage extends Container {
     }
 
     // Update HUD
-    this.minimap.update(this.player, this.world);
+    this.minimap.update(this.player, this.world, this.enemies);
   }
 }

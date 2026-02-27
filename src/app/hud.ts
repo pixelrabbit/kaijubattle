@@ -1,26 +1,32 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import type { Player } from "./player";
 import type { Homebase, Obstacle } from "./buildings";
+import type { Enemy } from "./enemy";
 
 export class Minimap extends Container {
   private cameraRect: Graphics;
   private playerDot: Graphics;
   private obstacleContainer: Container;
+  private enemyContainer: Container;
 
   private readonly worldWidth: number;
+  private readonly worldHeight: number;
   private readonly screenWidth: number;
   private readonly screenHeight: number;
 
   private readonly minimapWidth = 120;
-  private readonly minimapHeight = 120;
-  private readonly minimapScale: number;
+  private readonly minimapHeight: number;
+  public readonly minimapScale: number;
 
-  constructor(worldWidth: number, _worldHeight: number, screenWidth: number, screenHeight: number) {
+  constructor(worldWidth: number, worldHeight: number, screenWidth: number, screenHeight: number) {
     super();
 
     this.worldWidth = worldWidth;
+    this.worldHeight = worldHeight;
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
+
+    this.minimapHeight = this.minimapWidth * (this.worldHeight / this.worldWidth);
 
     this.x = screenWidth - this.minimapWidth - 12;
     this.y = 12;
@@ -35,7 +41,10 @@ export class Minimap extends Container {
     this.obstacleContainer = new Container();
     this.addChild(this.obstacleContainer);
 
-    // Calculate scale - assuming world is square for simplicity
+    // Container for enemies
+    this.enemyContainer = new Container();
+    this.addChild(this.enemyContainer);
+
     this.minimapScale = this.minimapWidth / this.worldWidth;
 
     // Camera viewport rectangle
@@ -78,21 +87,31 @@ export class Minimap extends Container {
     this.obstacleContainer.addChild(homebaseRep);
   }
 
-  public update(player: Player, camera: Container): void {
+  public update(player: Player, camera: Container, enemies: Enemy[]): void {
     if (!player) {
       this.playerDot.visible = false;
       this.cameraRect.visible = false;
+      this.enemyContainer.visible = false;
       return;
     }
 
     this.playerDot.visible = true;
     this.cameraRect.visible = true;
+    this.enemyContainer.visible = true;
 
     this.playerDot.x = player.x * this.minimapScale;
     this.playerDot.y = player.y * this.minimapScale;
 
     this.cameraRect.x = -camera.x * this.minimapScale;
     this.cameraRect.y = -camera.y * this.minimapScale;
+
+    this.enemyContainer.removeChildren();
+    for (const enemy of enemies) {
+      const enemyDot = new Graphics().circle(0, 0, enemy.minimapRadius).fill({ color: enemy.minimapColor });
+      enemyDot.x = enemy.x * this.minimapScale;
+      enemyDot.y = enemy.y * this.minimapScale;
+      this.enemyContainer.addChild(enemyDot);
+    }
   }
 }
 

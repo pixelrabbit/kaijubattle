@@ -7,6 +7,8 @@ import type { Obstacle } from "./buildings";
 
 export class Enemy extends Character {
   private pursuitRadius = 600;
+  public minimapColor = colors.red;
+  public minimapRadius = 2;
 
   constructor(
     texture: Texture,
@@ -26,53 +28,24 @@ export class Enemy extends Character {
     this.parent?.addChild(bullet);
   }
 
-  private isCollidingWithPlayer(): boolean {
-    const enemyBounds = this.getHitbox();
-    const playerBounds = this.player.getHitbox();
-
-    return (
-      enemyBounds.x < playerBounds.x + playerBounds.width &&
-      enemyBounds.x + enemyBounds.width > playerBounds.x &&
-      enemyBounds.y < playerBounds.y + playerBounds.height &&
-      enemyBounds.y + enemyBounds.height > playerBounds.y
-    );
-  }
-
   public update(ticker: Ticker, worldWidth: number, worldHeight: number, obstacles: Obstacle[]) {
-    // if (!this.player || this.player.isDead()) return; // Stop updating if player is dead
+    if (!this.player || this.player.isDead()) return; // Stop updating if player is dead
 
     const dt = ticker.deltaTime;
-    const oldX = this.x;
-    const oldY = this.y;
 
-    // Simple AI: move towards the player
-    const dx = this.player.x - this.x;
-    const dy = this.player.y - this.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const distanceToPlayer = Math.sqrt(
+      (this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2
+    );
 
     // Only move if the player is within the pursuit radius
-    if (distance > 0 && distance < this.pursuitRadius) {
-      // Avoid division by zero
-      const normalizedDx = dx / distance;
-      const normalizedDy = dy / distance;
-
-      // Move on X axis
-      this.x += normalizedDx * this.speed * dt;
-      if (this.isCollidingWithObstacles(obstacles) || this.isCollidingWithPlayer()) {
-        this.x = oldX;
-      }
-
-      // Move on Y axis
-      this.y += normalizedDy * this.speed * dt;
-      if (this.isCollidingWithObstacles(obstacles) || this.isCollidingWithPlayer()) {
-        this.y = oldY;
-      }
+    if (distanceToPlayer > 0 && distanceToPlayer < this.pursuitRadius) {
+      this.moveTowards(dt, this.player, worldWidth, worldHeight, obstacles);
     }
 
     this.keepInBounds(worldWidth, worldHeight);
 
     // Firing logic
-    if (distance > 50 && Date.now() - this.lastFired > this.fireRate) {
+    if (distanceToPlayer > 50 && Date.now() - this.lastFired > this.fireRate) {
       // Don't fire if too close
       this.fire();
       this.lastFired = Date.now();

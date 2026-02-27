@@ -16,6 +16,7 @@ export class Homebase extends Obstacle {
   private readonly barWidth = 20;
   private readonly barHeight = 80;
   private readonly segmentSpacing = 4;
+  private health = 4;
 
   constructor() {
     super(240, 240, colors.green);
@@ -56,9 +57,14 @@ export class Homebase extends Obstacle {
    * Update health display
    * @param health Value between 0 and 4
    */
-  public setHealth(health: number) {
+  public setHealth(health: number): void {
+    this.health = Math.max(0, health);
     this.segments.forEach((segment, index) => {
-      segment.visible = index < health;
+      segment.visible = index < this.health;
     });
+  }
+
+  public takeDamage(amount: number): void {
+    this.setHealth(this.health - amount);
   }
 }
