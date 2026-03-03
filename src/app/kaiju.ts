@@ -12,11 +12,17 @@ export class Kaiju extends Enemy {
     super(texture, player);
     this.speed = 0.5;
     this.fireRate = 4000;
-    this.health = 20;
+    this.health = 100;
     this.maxHealth = 100;
-    this.scale.set(4); // Make it huge
     this.minimapColor = 0xff00ff; // Magenta for the big boss
     this.minimapRadius = 5;
+    this.updateHealthBar();
+
+
+    this.sprite.width = 240;
+    this.sprite.height = 240;
+    this.hitbox.clear().rect(-60, -60, 120, 120).stroke({ width: 4, color: 0xff0000 });
+
   }
 
   // Override fire to target homebase
@@ -39,9 +45,9 @@ export class Kaiju extends Enemy {
     const dy = this.homebase.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance > 50) { // Stop when close to homebase
-      this.moveTowards(dt, this.homebase, worldWidth, worldHeight, obstacles);
-    }
+    // if (distance > 50) { // Stop when close to homebase
+    this.moveTowards(dt, this.homebase, worldWidth, worldHeight, obstacles);
+    // }
 
     this.keepInBounds(worldWidth, worldHeight);
 

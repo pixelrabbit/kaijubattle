@@ -11,6 +11,9 @@ export abstract class Character extends Container {
   protected fireRate: number;
   public health: number;
   public maxHealth: number;
+  protected healthBar: Graphics;
+  protected hitbox: Graphics;
+  protected healthBarBg: Graphics;
 
   // A* Pathfinding
   private path: { x: number; y: number }[] | null = null;
@@ -25,15 +28,20 @@ export abstract class Character extends Container {
     this.health = health;
     this.maxHealth = health;
 
-    const hitbox = new Graphics();
-    hitbox
+    this.hitbox = new Graphics();
+    this.hitbox
       .rect(-texture.width / 2, -texture.height / 2, texture.width, texture.height)
       .stroke({ width: 4, color: hitboxColor });
-    this.addChild(hitbox);
+    this.addChild(this.hitbox);
 
     this.sprite = new Sprite(texture);
     this.sprite.anchor.set(0.5);
     this.addChild(this.sprite);
+
+    this.healthBarBg = new Graphics();
+    this.addChild(this.healthBarBg);
+    this.healthBar = new Graphics();
+    this.addChild(this.healthBar);
   }
 
   public getHitbox(): Rectangle {
@@ -59,6 +67,7 @@ export abstract class Character extends Container {
 
   public takeDamage(amount: number) {
     this.health -= amount;
+    this.updateHealthBar();
   }
 
   public isDead(): boolean {
@@ -73,16 +82,40 @@ export abstract class Character extends Container {
 
   protected abstract fire(): void;
 
-  public isCollidingWithCharacters(characters: Character[]): boolean {
+  public isCollidingWithCharacters(characters: Character[]): Character | null {
     const bounds = this.getHitbox();
     for (const other of characters) {
       if (this === other) continue;
       const otherBounds = other.getHitbox();
       if (bounds.intersects(otherBounds)) {
-        return true;
+        return other;
       }
     }
-    return false;
+    return null;
+  }
+
+  protected updateHealthBar(): void {
+    this.healthBar.clear();
+    this.healthBarBg.clear();
+
+    const barWidth = this.sprite.width;
+    const barHeight = 8 / this.scale.y;
+    const yOffset = -this.sprite.height / 2 - 15 / this.scale.y;
+
+    // Background of the health bar
+    this.healthBarBg.rect(-barWidth / 2, yOffset, barWidth, barHeight).fill({ color: 0x333333 });
+
+    // The health part
+    const healthPercentage = this.health / this.maxHealth;
+    const healthColor =
+      healthPercentage > 0.75
+        ? 0x00ff00 // Green
+        : healthPercentage > 0.5
+          ? 0xffff00 // Yellow
+          : healthPercentage > 0.25
+            ? 0xffa500 // Orange
+            : 0xff0000; // Red
+    this.healthBar.rect(-barWidth / 2, yOffset, barWidth * healthPercentage, barHeight).fill({ color: healthColor });
   }
 
   protected moveTowards(

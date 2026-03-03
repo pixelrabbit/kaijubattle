@@ -22,8 +22,8 @@ export class GameStage extends Container {
   private minimap: Minimap;
   private readonly screenWidth: number;
   private readonly screenHeight: number;
-  private readonly worldWidth = 2800;
-  private readonly worldHeight = 2000;
+  private readonly worldWidth = 2400;
+  private readonly worldHeight = 2400;
   private world: Container;
   private kaiju: Kaiju | null = null;
   private timeSinceStart = 0;
@@ -60,8 +60,7 @@ export class GameStage extends Container {
   }
 
   public async setup(): Promise<void> {
-    // Add repeating grass background
-    const grassTexture = await Assets.load("assets/grass.jpg");
+    const grassTexture = await Assets.load("assets/bg1.png");
     const background = new TilingSprite({
       texture: grassTexture,
       width: this.worldWidth,
@@ -69,7 +68,7 @@ export class GameStage extends Container {
     });
     this.world.addChild(background);
 
-    this.createWaterArea();
+    // this.createWaterArea();
 
     // Load the bunny player
     const texture = await Assets.load("https://pixijs.com/assets/bunny.png");
@@ -80,13 +79,13 @@ export class GameStage extends Container {
     this.player.y = this.worldHeight / 2;
     this.world.addChild(this.player);
 
-    const obstacleData = [
-      { x: 200, y: 200, w: 100, h: 100 },
-      { x: 800, y: 150, w: 50, h: 300 },
-      { x: 500, y: 500, w: 200, h: 40 },
-      { x: 900, y: 600, w: 120, h: 120 },
-    ];
-    this.createObstacles(obstacleData);
+    // const obstacleData = [
+    //   { x: 200, y: 200, w: 100, h: 100 },
+    //   { x: 800, y: 150, w: 50, h: 300 },
+    //   { x: 500, y: 500, w: 200, h: 40 },
+    //   { x: 900, y: 600, w: 120, h: 120 },
+    // ];
+    // this.createObstacles(obstacleData);
 
     this.minimap.setObstacles(this.obstacles);
 
@@ -112,13 +111,10 @@ export class GameStage extends Container {
       this.enemies.push(enemy);
       this.world.addChild(enemy);
     }
-  }
 
-  private async createKaiju(): Promise<void> {
-    if (!this.player) return; // Don't spawn if player is dead
-
-    const texture = await Assets.load("https://pixijs.com/assets/bunny.png");
-    this.kaiju = new Kaiju(texture, this.player, this.homebase);
+    // KAIJU
+    const kaijuTexture = await Assets.load("assets/kaiju.png");
+    this.kaiju = new Kaiju(kaijuTexture, this.player, this.homebase);
 
     // Position on the right side of the stage
     this.kaiju.x = this.worldWidth - 100;
@@ -128,48 +124,48 @@ export class GameStage extends Container {
     this.world.addChild(this.kaiju);
   }
 
-  private createWaterArea(): void {
-    const water = new Graphics();
-    const waterStartX = this.worldWidth * 0.9;
-    const amplitude1 = 40;
-    const frequency1 = 150;
-    const amplitude2 = 20;
-    const frequency2 = 70;
-    const segmentLength = 20;
 
-    water.moveTo(waterStartX, -10); // Start slightly off-screen
+  //   const water = new Graphics();
+  //   const waterStartX = this.worldWidth * 0.9;
+  //   const amplitude1 = 40;
+  //   const frequency1 = 150;
+  //   const amplitude2 = 20;
+  //   const frequency2 = 70;
+  //   const segmentLength = 20;
 
-    // Generate the wavy boundary using a combination of sine waves for a more natural look
-    for (let y = 0; y <= this.worldHeight + 10; y += segmentLength) {
-      const randomFactor = (Math.random() - 0.5) * 25;
-      const sin1 = Math.sin(y / frequency1) * amplitude1;
-      const sin2 = Math.sin(y / frequency2) * amplitude2;
-      const x = waterStartX + sin1 + sin2 + randomFactor;
-      water.lineTo(x, y);
-    }
+  //   water.moveTo(waterStartX, -10); // Start slightly off-screen
 
-    // Close the shape to the right
-    water.lineTo(this.worldWidth + 10, this.worldHeight + 10);
-    water.lineTo(this.worldWidth + 10, -10);
-    water.closePath();
+  //   // Generate the wavy boundary using a combination of sine waves for a more natural look
+  //   for (let y = 0; y <= this.worldHeight + 10; y += segmentLength) {
+  //     const randomFactor = (Math.random() - 0.5) * 25;
+  //     const sin1 = Math.sin(y / frequency1) * amplitude1;
+  //     const sin2 = Math.sin(y / frequency2) * amplitude2;
+  //     const x = waterStartX + sin1 + sin2 + randomFactor;
+  //     water.lineTo(x, y);
+  //   }
 
-    // Fill with a water-like color
-    water.fill({ color: 0x33a1de, alpha: 0.85 });
+  //   // Close the shape to the right
+  //   water.lineTo(this.worldWidth + 10, this.worldHeight + 10);
+  //   water.lineTo(this.worldWidth + 10, -10);
+  //   water.closePath();
 
-    this.world.addChildAt(water, 1); // Add it after the background
+  //   // Fill with a water-like color
+  //   water.fill({ color: 0x33a1de, alpha: 0.85 });
 
-    // Add water representation to minimap
-    const waterMinimap = new Graphics()
-      .rect(
-        waterStartX * this.minimap.minimapScale,
-        0,
-        (this.worldWidth - waterStartX) * this.minimap.minimapScale,
-        this.worldHeight * this.minimap.minimapScale
-      )
-      .fill({ color: 0x33a1de, alpha: 0.5 });
-    this.minimap.addChildAt(waterMinimap, 1); // Add behind player/camera but above background
+  //   this.world.addChildAt(water, 1); // Add it after the background
 
-  }
+  //   // Add water representation to minimap
+  //   const waterMinimap = new Graphics()
+  //     .rect(
+  //       waterStartX * this.minimap.minimapScale,
+  //       0,
+  //       (this.worldWidth - waterStartX) * this.minimap.minimapScale,
+  //       this.worldHeight * this.minimap.minimapScale
+  //     )
+  //     .fill({ color: 0x33a1de, alpha: 0.5 });
+  //   this.minimap.addChildAt(waterMinimap, 1); // Add behind player/camera but above background
+
+  // }
 
   // OBSTACLES
   private obstacles: Obstacle[] = [];
@@ -244,10 +240,10 @@ export class GameStage extends Container {
   public update(ticker: Ticker): void {
     this.timeSinceStart += ticker.deltaMS;
 
-    if (!this.kaijuSpawned && this.timeSinceStart > 10) {
-      this.createKaiju();
-      this.kaijuSpawned = true;
-    }
+    // if (!this.kaijuSpawned && this.timeSinceStart > 10) {
+    //   this.createKaiju();
+    //   this.kaijuSpawned = true;
+    // }
 
     this.player?.update(ticker, this.worldWidth, this.worldHeight, this.obstacles, this.enemies); // The '?' handles if player is null
     this.enemies.forEach((enemy) => {
