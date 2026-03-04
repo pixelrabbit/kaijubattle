@@ -1,16 +1,16 @@
-import { Assets, Container, Ticker, FederatedPointerEvent, Rectangle, TilingSprite, Graphics } from "pixi.js";
+import { Assets, Container, Ticker, FederatedPointerEvent, Rectangle, TilingSprite } from "pixi.js";
 import { Player } from "./player";
 import { Minimap } from "./hud";
 import { Kaiju } from "./kaiju";
 import { Enemy } from "./enemy";
 import { Homebase, Obstacle } from "./buildings";
 
-interface ObstacleData {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
+// interface ObstacleData {
+//   x: number;
+//   y: number;
+//   w: number;
+//   h: number;
+// }
 
 export class GameStage extends Container {
   // The '!' is a definite assignment assertion. It tells TypeScript that 'player'
@@ -27,7 +27,7 @@ export class GameStage extends Container {
   private world: Container;
   private kaiju: Kaiju | null = null;
   private timeSinceStart = 0;
-  private kaijuSpawned = false;
+  // private kaijuSpawned = false;
   private homebase!: Homebase;
 
   constructor(screenWidth: number, screenHeight: number) {
@@ -169,16 +169,16 @@ export class GameStage extends Container {
 
   // OBSTACLES
   private obstacles: Obstacle[] = [];
-  private createObstacles(obstacleData: ObstacleData[]): void {
-    obstacleData.forEach((data: ObstacleData) => {
-      const obstacle = new Obstacle(data.w, data.h, 0x333333);
-      obstacle.x = data.x;
-      obstacle.y = data.y;
+  // private createObstacles(obstacleData: ObstacleData[]): void {
+  //   obstacleData.forEach((data: ObstacleData) => {
+  //     const obstacle = new Obstacle(data.w, data.h, 0x333333);
+  //     obstacle.x = data.x;
+  //     obstacle.y = data.y;
 
-      this.obstacles.push(obstacle);
-      this.world.addChild(obstacle);
-    });
-  }
+  //     this.obstacles.push(obstacle);
+  //     this.world.addChild(obstacle);
+  //   });
+  // }
 
   private handleCollisions(dt: number): void {
     if (!this.player) return;
